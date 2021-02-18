@@ -85,5 +85,84 @@ namespace RestaurantManagmentApp
             }
             return -1;
         }
+
+        public void insertFoodData(String id, String foodName, String price)
+        {
+            using (MySqlCommand cmd = new MySqlCommand())
+            {
+                conn.Open();
+                cmd.CommandText = "INSERT INTO `foodlist` (`Id`, `Name`, `Price`) VALUES (@id, @foodName, @price)";
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = conn;
+
+                cmd.Parameters.Add("@id", MySqlDbType.Int32).Value = id;
+                cmd.Parameters.Add("@foodName", MySqlDbType.Text).Value = foodName;
+                cmd.Parameters.Add("@price", MySqlDbType.Double).Value = price;
+
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show("Error " + ex.Message);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+                
+            }
+        }
+
+        public void updateFoodData(String id, String foodName, String price)
+        {
+            using (MySqlCommand cmd = new MySqlCommand())
+            {
+                conn.Open();
+                cmd.CommandText = "UPDATE `foodlist` SET `Id`='" + id + "',`Name`='" + foodName + "',`Price`='" + price+ "' WHERE Id = " + int.Parse(id);
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = conn;
+
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error " + ex.Message);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+
+            }
+        }
+
+        public void deleteFoodData(String id)
+        {
+            using (MySqlCommand cmd = new MySqlCommand())
+            {
+                conn.Open();
+                cmd.CommandText = "DELETE FROM `foodlist` WHERE Id =" + int.Parse(id);
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = conn;
+
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error " + ex.Message);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+
+            }
+        }
     }
 }
