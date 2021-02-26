@@ -86,16 +86,15 @@ namespace RestaurantManagmentApp
             return -1;
         }
 
-        public void insertFoodData(String id, String foodName, String price)
+        public void insertFoodData(String foodName, String price)
         {
             using (MySqlCommand cmd = new MySqlCommand())
             {
                 conn.Open();
-                cmd.CommandText = "INSERT INTO `foodlist` (`Id`, `Name`, `Price`) VALUES (@id, @foodName, @price)";
+                cmd.CommandText = "INSERT INTO `foodlist` (`Name`, `Price`) VALUES (@foodName, @price)";
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = conn;
 
-                cmd.Parameters.Add("@id", MySqlDbType.Int32).Value = id;
                 cmd.Parameters.Add("@foodName", MySqlDbType.Text).Value = foodName;
                 cmd.Parameters.Add("@price", MySqlDbType.Double).Value = price;
 
@@ -165,10 +164,166 @@ namespace RestaurantManagmentApp
             }
         }
 
-        public void confirmOrder(ListView dataTosave)
+        public void confirmOrder(String tableNumber, String totalPrice, ListView selectedFood)
         {
+            long receiptId = insertReceipt(tableNumber, totalPrice);
+
+            var dataList = new List<String>();
+            String orderData = "";
+            foreach (ListViewItem item in selectedFood.Items)
+            {
+                Console.WriteLine(item);
+                dataList.Add(getInitailOrderData(item, receiptId.ToString()));
+            }
+            Console.WriteLine(dataList.ToArray());
+            orderData += String.Join(", ", dataList.ToArray());
+            Console.WriteLine(orderData);
+            insertFoodOrder(orderData);
+
 
         }
-        
+
+        public void updateOrder(ListView selectedFood, String receiptId)
+        {
+
+            var dataList = new List<String>();
+            String orderData = "";
+            foreach (ListViewItem item in selectedFood.Items)
+            {
+                Console.WriteLine(item);
+                dataList.Add(getInitailOrderData(item, receiptId));
+            }
+            Console.WriteLine(dataList.ToArray());
+            orderData += String.Join(", ", dataList.ToArray());
+            insertFoodOrder(orderData);
+
+
+        }
+
+        private void insertFoodOrder(String orderData)
+        {
+            String sqlToCreateReceipt = "INSERT INTO `food_receipt_juction` (`FoodId`, `FoodName`, `OederPrice`, `Quantity`, Reciept) VALUES" + orderData;
+            Console.WriteLine(sqlToCreateReceipt);
+            using (MySqlCommand cmd = new MySqlCommand())
+            {
+                conn.Open();
+                cmd.CommandText = sqlToCreateReceipt;
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = conn;
+
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                    
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error :: Insert Oeder " + ex.Message);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+                
+            }
+        }
+
+        public void checkbill(String receiptId, String totalPrice, String vatPrice, String serviceChargePrice)
+        {
+            String sqlToUpdateReceipt = "UPDATE `recieptlist` SET `totalPrice`= "+ totalPrice + ", `Status`='Paid',`Vat`= "+ vatPrice + ",`ServiceCharge`="+ serviceChargePrice + " WHERE Id = " + receiptId;
+            using (MySqlCommand cmd = new MySqlCommand())
+            {
+                conn.Open();
+                cmd.CommandText = sqlToUpdateReceipt;
+                cmd.CommandType = CommandType.Text; 
+                cmd.Connection = conn;
+
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                    MessageBox.Show("Sucess Update Receipt");
+
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error :: Update Oeder " + ex.Message);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+
+            }
+        }
+
+        private long insertReceipt(String tableNumber, String totalPrice)
+        {
+            string receiptData = getInitailTableData(tableNumber, totalPrice);
+            String sqlToCreateReceipt = "INSERT INTO `recieptlist` (`totalPrice`, `tableNumber`, `Status`) VALUES" + receiptData;
+            long insertedId = 0;
+
+            Console.WriteLine(sqlToCreateReceipt);
+
+            using (MySqlCommand cmd = new MySqlCommand())
+            {
+                conn.Open();
+                cmd.CommandText = sqlToCreateReceipt;
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = conn;
+
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                    insertedId = cmd.LastInsertedId;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error :: Insert Rceipt " + ex.Message);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+
+                return insertedId;
+            }
+        }
+        private string getInitailOrderData(ListViewItem eachOrder, String receiptId)
+        {
+
+            String dataList = "";
+
+            dataList =
+                             "(" +
+                             "'" +
+                              eachOrder.SubItems[0].Text +
+                             "'" +
+                             "," +
+                             "'" +
+                              eachOrder.SubItems[1].Text +
+                             "'" +
+                             "," +
+                             "'" +
+                              eachOrder.SubItems[2].Text +
+                             "'" +
+                             "," +
+                             "'" +
+                              eachOrder.SubItems[3].Text +
+                             "'" +
+                             "," +
+                             "'" +
+                              receiptId +
+                             "'" +
+                             ")";
+
+            return dataList;
+        }
+
+        private string getInitailTableData(String tableNumber, String totalPrice)
+        {
+            string data = "";
+            data += "(" + "'" + totalPrice + "','" + tableNumber + "','Unpaid')";
+            return data;
+        }
     }
 }
